@@ -12,7 +12,7 @@ def download_file(img_url, file_name, file_path='cache/faces'):
         http = urllib3.PoolManager()
         print(img_url)
         response = http.request('GET', img_url)
-        save_path = '{}{}{}'.format(file_path, os.altsep, file_name)
+        save_path = '{}{}{}'.format(file_path, os.sep, file_name)
         with open(save_path, 'wb') as f:
             f.write(response.data)
         response.release_conn()
