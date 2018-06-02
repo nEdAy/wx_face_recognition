@@ -77,6 +77,13 @@ def get_is_match_face_by_trained(save_path, face_token):
     # Note: You can pass in either a classifier file name or a classifier model instance
 
     face_token_path = 'trained/' + face_token + '.clf'
+
+    if not os.path.exists(save_path):
+        return False
+
+    if not os.path.exists(face_token_path):
+        return False
+
     predictions = predict(save_path, model_path=face_token_path)
 
     # Print results on the console
