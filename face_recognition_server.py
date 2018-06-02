@@ -102,6 +102,7 @@ def serve():
     face_recognition_pb2_grpc.add_FaceRecognitionServicer_to_server(FaceRecognition(), server)
     server.add_insecure_port('[::]:50052')
     server.start()
+    print("server start at [::]:50052")
     try:
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
@@ -111,4 +112,3 @@ def serve():
 
 if __name__ == '__main__':
     serve()
-    print("server start at [::]:50052")
