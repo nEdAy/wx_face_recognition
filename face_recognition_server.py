@@ -111,3 +111,4 @@ def serve():
 
 if __name__ == '__main__':
     serve()
+    print("server start at [::]:50052")
