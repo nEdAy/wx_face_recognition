@@ -101,8 +101,8 @@ def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     face_recognition_pb2_grpc.add_FaceRecognitionServicer_to_server(FaceRecognition(), server)
     server.add_insecure_port('[::]:50052')
-    server.start()
     print("server start at [::]:50052")
+    server.start()
     try:
         while True:
             time.sleep(_ONE_DAY_IN_SECONDS)
