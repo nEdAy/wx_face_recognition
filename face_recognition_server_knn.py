@@ -84,7 +84,6 @@ def get_is_match_face_by_trained(save_temp_file_path, face_token):
         return False
 
     predictions = predict(save_temp_file_path, model_path=face_token_file_path)
-    os.remove(save_temp_file_path)
 
     # Print results on the console
     for name, (top, right, bottom, left) in predictions:
@@ -92,6 +91,7 @@ def get_is_match_face_by_trained(save_temp_file_path, face_token):
         if face_token == name:
             return True
 
+    os.remove(save_temp_file_path)
     return False
 
 
