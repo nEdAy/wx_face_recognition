@@ -56,15 +56,12 @@ def get_face_count_and_encodings(prefix_cos_url, file_name, face_token):
         # STEP 1: Train the KNN classifier and save it to disk
         # Once the model is trained and saved, you can skip this step next time.
         print("Training KNN classifier...")
-        save_path = 'trained'
-        if not os.path.exists(save_path):
-            print('文件夹', save_path, '不存在，重新建立')
-            os.makedirs(save_path)
         face_token_path = 'cache/all_face_token.clf'
         train('cache/faces', model_save_path=face_token_path, n_neighbors=2)
         print("Training complete!")
         return count
     else:
+        os.removedirs(file_path)
         return count
 
 
@@ -82,9 +79,11 @@ def get_is_match_face_by_trained(save_path, face_token):
         return False
 
     if not os.path.exists(face_token_path):
+        os.remove(save_path)
         return False
 
     predictions = predict(save_path, model_path=face_token_path)
+    os.remove(save_path)
 
     # Print results on the console
     for name, (top, right, bottom, left) in predictions:
