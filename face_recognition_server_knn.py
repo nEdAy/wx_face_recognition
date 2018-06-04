@@ -48,6 +48,9 @@ def get_face_encodings(image):
 
 def get_face_count_and_encodings(prefix_cos_url, file_name, face_token):
     file_path = 'cache/faces/' + face_token
+    if os.path.exists(file_path):
+        # error
+        return -1
     save_path = download_pic(prefix_cos_url, file_name, file_path)
     # Load the uploaded image file
     image = face_recognition.load_image_file(save_path)
