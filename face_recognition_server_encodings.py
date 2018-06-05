@@ -7,9 +7,9 @@ import face_recognition_pb2_grpc
 import grpc
 
 import face_recognition
+import numpy as np
 
 from download_file import download_file
-from face_recognition_knn import train, predict
 
 _ONE_DAY_IN_SECONDS = 60 * 60 * 24
 
@@ -21,15 +21,13 @@ class FaceRecognition(face_recognition_pb2_grpc.FaceRecognitionServicer):
         return face_recognition_pb2.GetFaceCountReply(count=count)
 
     def IsMatchFace(self, request, context):
-        file_path = 'cache/temps/' + request.faceToken
-        save_path = download_pic(request.prefixCosUrl, request.fileName, file_path=file_path)
-        is_match_face = get_is_match_face_by_trained(save_path, request.faceToken)
+        is_match_face = get_is_match_face(request.prefixCosUrl, request.fileName, request.faceToken)
         return face_recognition_pb2.IsMatchFaceReply(isMatchFace=is_match_face)
 
 
-def download_pic(prefix_cos_url, file_name, file_path):
-    save_path = download_file(prefix_cos_url + file_name, file_name, file_path)
-    return save_path
+def download_pic(prefix_cos_url, file_name, dir_path):
+    file_path = download_file(prefix_cos_url + file_name, file_name, dir_path)
+    return file_path
 
 
 def found_face_count(image):
@@ -47,61 +45,59 @@ def get_face_encodings(image):
 
 
 def get_face_count_and_encodings(prefix_cos_url, file_name, face_token):
-    file_path = 'cache/faces/' + face_token
-    save_path = download_pic(prefix_cos_url, file_name, file_path)
+    save_face_dir_path = 'cache/faces/' + face_token
+    save_encodings_dir_path = 'cache/encodings/'
+    save_encodings_file_path = save_encodings_dir_path + face_token + '.npy'
+    # if os.path.exists(save_face_dir_path):
+    # error
+    # return -1
+    # if os.path.exists(save_encodings_file_path):
+    # error
+    # return -1
+    save_face_file_path = download_pic(prefix_cos_url, file_name, save_face_dir_path)
     # Load the uploaded image file
-    image = face_recognition.load_image_file(save_path)
-    count = found_face_count(image)
+    face_image = face_recognition.load_image_file(save_face_file_path)
+    count = found_face_count(face_image)
     if count == 1:
         # STEP 1: Train the KNN classifier and save it to disk
         # Once the model is trained and saved, you can skip this step next time.
-        print("Training KNN classifier...")
-        save_path = 'trained'
-        if not os.path.exists(save_path):
-            print('文件夹', save_path, '不存在，重新建立')
-            os.makedirs(save_path)
-        model_save_path = 'trained/' + face_token + '.clf'
-        train('cache/faces', model_save_path=model_save_path, n_neighbors=2)
-        print("Training complete!")
+        print("Get Encodings...")
+        known_face_encodings = get_face_encodings(face_image)
+        if not os.path.exists(save_encodings_dir_path):
+            print('文件夹', save_encodings_dir_path, '不存在，重新建立')
+            os.makedirs(save_encodings_dir_path)
+        np.save(save_encodings_file_path, known_face_encodings)
+        print("Get Encodings Complete!")
         return count
     else:
+        os.removedirs(save_face_dir_path)
         return count
 
 
-def get_is_match_face_by_trained(save_path, face_token):
-    # STEP 2: Using the trained classifier, make predictions for unknown images
-
-    print("Looking for faces in {}".format(save_path))
-
-    # Find all people in the image using a trained classifier model
-    # Note: You can pass in either a classifier file name or a classifier model instance
-
-    face_token_path = 'trained/' + face_token + '.clf'
-
-    if not os.path.exists(save_path):
-        return False
-
-    if not os.path.exists(face_token_path):
-        return False
-
-    predictions = predict(save_path, model_path=face_token_path)
-
-    # Print results on the console
-    for name, (top, right, bottom, left) in predictions:
-        print("- Found {} at ({}, {})".format(name, left, top))
-        if face_token == name:
-            return True
-
-    return False
-
-
-def get_is_match_face(known_face_encoding, unknown_face_encodings):
+def get_is_match_face(prefix_cos_url, file_name, face_token):
+    save_temp_dir_path = 'cache/temps/' + face_token
+    save_temp_file_path = download_pic(prefix_cos_url, file_name, dir_path=save_temp_dir_path)
+    unknown_face_image = face_recognition.load_image_file(save_temp_file_path)
+    unknown_face_encodings = get_face_encodings(unknown_face_image)
+    save_encodings_dir_path = 'cache/encodings/'
+    save_encodings_file_path = save_encodings_dir_path + face_token + '.npy'
+    if not os.path.exists(save_encodings_file_path):
+        # error
+        os.remove(save_temp_file_path)
+        return face_recognition_pb2.IsMatchFaceReply(isMatchFace=False)
+    known_face_encodings = np.load(save_encodings_file_path)
     if len(unknown_face_encodings) > 0:
         # See if the first face in the uploaded image matches the known face
-        match_results = face_recognition.compare_faces([known_face_encoding], unknown_face_encodings[0])
-        return match_results[0]
+        match_results = face_recognition.compare_faces(known_face_encodings, unknown_face_encodings[0])
+        if match_results[0]:
+            is_match_face = True
+        else:
+            is_match_face = False
+            os.remove(save_temp_file_path)
     else:
-        return False
+        is_match_face = False
+        os.remove(save_temp_file_path)
+    return is_match_face
 
 
 def serve():

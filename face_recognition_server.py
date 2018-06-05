@@ -1,7 +1,7 @@
 import face_recognition_server_knn
 import face_recognition_server_encodings
 
-USE_KNN = True
+USE_KNN = False
 
 if __name__ == '__main__':
     if USE_KNN:
