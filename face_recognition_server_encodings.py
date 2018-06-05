@@ -84,18 +84,15 @@ def get_is_match_face(prefix_cos_url, file_name, face_token):
     if not os.path.exists(save_encodings_file_path):
         # error
         os.remove(save_temp_file_path)
-        return face_recognition_pb2.IsMatchFaceReply(isMatchFace=False)
+        return False
     known_face_encodings = np.load(save_encodings_file_path)
     if len(unknown_face_encodings) > 0:
         # See if the first face in the uploaded image matches the known face
         match_results = face_recognition.compare_faces(known_face_encodings, unknown_face_encodings[0])
-        if match_results[0]:
-            is_match_face = True
-        else:
-            is_match_face = False
-            os.remove(save_temp_file_path)
+        is_match_face = match_results[0]
     else:
         is_match_face = False
+    if not is_match_face:
         os.remove(save_temp_file_path)
     return is_match_face
 
