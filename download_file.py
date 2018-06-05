@@ -1,6 +1,8 @@
 import os
 import urllib3
 
+urllib3.disable_warnings()
+
 
 def download_file(img_url, file_name, dir_path='cache/faces'):
     # 保存文件到磁盘文件夹 file_path 中，默认为当前脚本运行目录下的 cache/faces 文件夹
