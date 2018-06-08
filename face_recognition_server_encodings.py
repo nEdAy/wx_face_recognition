@@ -70,7 +70,7 @@ def get_face_count_and_encodings(prefix_cos_url, file_name, face_token):
         print("Get Encodings Complete!")
         return count
     else:
-        os.removedirs(save_face_dir_path)
+        os.remove(save_face_file_path)
         return count
 
 
